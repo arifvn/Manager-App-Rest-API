@@ -14,11 +14,12 @@
       "error",
       {
         "semi": true,
-        "trailingComma": "none",
+        "trailingComma": "es5",
         "singleQuote": true,
         "printWidth": 80
       }
     ],
-    "no-console": "off"
+    "no-console": "off",
+    "func-names": "off"
   }
 }
