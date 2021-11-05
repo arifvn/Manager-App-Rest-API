@@ -1,5 +1,8 @@
+const otpGenerator = require('otp-generator');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -38,6 +41,12 @@ const UserSchema = new mongoose.Schema({
     enum: ['sunday', 'monday', 'tuesday', 'wednesday', 'friday', 'saturday'],
     default: 'monday',
   },
+  confirmEmailToken: String,
+  conifrmEmailExpire: Date,
+  isEmailConfirmed: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
@@ -61,6 +70,27 @@ UserSchema.pre('save', async function (next) {
 
 UserSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
+};
+
+UserSchema.methods.getConfirmEmailToken = async function () {
+  const confirmEmailToken = otpGenerator.generate(6, {
+    alphabets: false,
+    upperCase: true,
+    specialChars: false,
+  });
+
+  this.confirmEmailToken = crypto
+    .createHash('sha256')
+    .update(confirmEmailToken)
+    .digest()
+    .toString('hex');
+  this.confirmEmailExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+  return confirmEmailToken;
+};
+
+UserSchema.methods.getJwtToken = async function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY);
 };
 
 module.exports = mongoose.model('User', UserSchema);
